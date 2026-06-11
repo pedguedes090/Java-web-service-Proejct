@@ -7,6 +7,8 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,6 +50,36 @@ public class JwtServiceImpl implements JwtService {
         }
     }
 
+    @Override
+    public boolean isTokenValid(String token) {
+        try {
+            String[] parts = token.split("\\.");
+            if (parts.length != 3) {
+                return false;
+            }
+
+            String content = parts[0] + "." + parts[1];
+            if (!sign(content).equals(parts[2])) {
+                return false;
+            }
+
+            Long expiresAt = getLongFromPayload(token, "exp");
+            return expiresAt != null && expiresAt > Instant.now().getEpochSecond();
+        } catch (Exception ex) {
+            return false;
+        }
+    }
+
+    @Override
+    public String getEmailFromToken(String token) {
+        return getStringFromPayload(token, "sub");
+    }
+
+    @Override
+    public String getRoleFromToken(String token) {
+        return getStringFromPayload(token, "role");
+    }
+
     private String sign(String content) throws Exception {
         Mac mac = Mac.getInstance("HmacSHA256");
         SecretKeySpec key = new SecretKeySpec(jwtSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
@@ -57,6 +89,26 @@ public class JwtServiceImpl implements JwtService {
 
     private String base64Url(byte[] bytes) {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    private String getStringFromPayload(String token, String fieldName) {
+        String payload = decodePayload(token);
+        Matcher matcher = Pattern.compile("\"" + fieldName + "\"\\s*:\\s*\"([^\"]*)\"").matcher(payload);
+        return matcher.find() ? matcher.group(1) : null;
+    }
+
+    private Long getLongFromPayload(String token, String fieldName) {
+        String payload = decodePayload(token);
+        Matcher matcher = Pattern.compile("\"" + fieldName + "\"\\s*:\\s*(\\d+)").matcher(payload);
+        return matcher.find() ? Long.parseLong(matcher.group(1)) : null;
+    }
+
+    private String decodePayload(String token) {
+        String[] parts = token.split("\\.");
+        if (parts.length != 3) {
+            return "";
+        }
+        return new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
     }
 
     private String toJson(Map<String, Object> data) {

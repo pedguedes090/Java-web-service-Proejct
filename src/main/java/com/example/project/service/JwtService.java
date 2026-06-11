@@ -5,4 +5,10 @@ import com.example.project.models.entity.User;
 public interface JwtService {
 
     String generateAccessToken(User user);
+
+    boolean isTokenValid(String token);
+
+    String getEmailFromToken(String token);
+
+    String getRoleFromToken(String token);
 }
