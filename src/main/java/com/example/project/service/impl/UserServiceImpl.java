@@ -1,5 +1,6 @@
 package com.example.project.service.impl;
 
+import com.example.project.models.dto.req.ChangePasswordRequest;
 import com.example.project.models.dto.req.RegisterStudentRequest;
 import com.example.project.models.dto.req.UserRequest;
 import com.example.project.models.entity.User;
@@ -98,6 +99,16 @@ public class UserServiceImpl implements UserService {
     public User findEntity(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Khong tim thay user"));
+    }
+
+    @Override
+    public void changePassword(ChangePasswordRequest request) {
+        User user = findEntity(request.getUserId());
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Mat khau cu khong dung");
+        }
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
     }
 
     private void updateUserFields(User user, UserRequest request) {

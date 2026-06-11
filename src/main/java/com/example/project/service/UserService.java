@@ -2,6 +2,7 @@ package com.example.project.service;
 
 import com.example.project.models.dto.req.RegisterStudentRequest;
 import com.example.project.models.dto.req.UserRequest;
+import com.example.project.models.dto.req.ChangePasswordRequest;
 import com.example.project.models.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,4 +22,6 @@ public interface UserService {
     void delete(Long id);
 
     User findEntity(Long id);
+
+    void changePassword(ChangePasswordRequest request);
 }
