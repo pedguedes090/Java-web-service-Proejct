@@ -11,4 +11,6 @@ public interface JwtService {
     String getEmailFromToken(String token);
 
     String getRoleFromToken(String token);
+
+    java.time.LocalDateTime getExpirationFromToken(String token);
 }

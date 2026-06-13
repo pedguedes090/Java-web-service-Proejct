@@ -7,11 +7,15 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import javax.crypto.SecretKey;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class JwtServiceImpl implements JwtService {
 
@@ -23,6 +27,7 @@ public class JwtServiceImpl implements JwtService {
 
     @Override
     public String generateAccessToken(User user) {
+        log.info("Tao access token: userId={}, role={}", user.getId(), user.getRole());
         Instant now = Instant.now();
         Instant expiresAt = now.plusSeconds(accessTokenExpirationMinutes * 60);
 
@@ -43,6 +48,7 @@ public class JwtServiceImpl implements JwtService {
             getClaims(token);
             return true;
         } catch (Exception ex) {
+            log.warn("Access token khong hop le: {}", ex.getMessage());
             return false;
         }
     }
@@ -55,6 +61,12 @@ public class JwtServiceImpl implements JwtService {
     @Override
     public String getRoleFromToken(String token) {
         return getClaims(token).get("role", String.class);
+    }
+
+    @Override
+    public LocalDateTime getExpirationFromToken(String token) {
+        Date expiration = getClaims(token).getExpiration();
+        return LocalDateTime.ofInstant(expiration.toInstant(), ZoneId.systemDefault());
     }
 
     private Claims getClaims(String token) {

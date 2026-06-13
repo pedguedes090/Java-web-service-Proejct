@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -62,8 +63,11 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public responseDto<Void> logout(@Valid @RequestBody LogoutRequest request) {
-        authService.logout(request);
+    public responseDto<Void> logout(
+            @Valid @RequestBody LogoutRequest request,
+            @RequestHeader("Authorization") String authorizationHeader
+    ) {
+        authService.logout(request, getTokenFromHeader(authorizationHeader));
         return responseDto.<Void>builder()
                 .success(true)
                 .message("Dang xuat thanh cong")
@@ -71,6 +75,13 @@ public class AuthController {
                 .errors(null)
                 .httpStatus(HttpStatus.OK)
                 .build();
+    }
+
+    private String getTokenFromHeader(String authorizationHeader) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            return authorizationHeader.substring(7);
+        }
+        return null;
     }
 
     @PostMapping("/change-password")
